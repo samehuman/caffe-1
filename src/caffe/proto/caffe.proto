@@ -423,6 +423,13 @@ message SolverParameter {
 
   optional bool local_lr_auto = 50 [default = false];
   optional float local_gw_ratio = 51 [default = 0.001];
+
+  optional float start_lr_policy =   160;
+  optional float max_lr = 161; 
+
+  optional int peaks = 162;
+  optional float end_lr= 163;
+
 }
 
 // A message that stores the solver snapshots

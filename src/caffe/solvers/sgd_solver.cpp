@@ -136,9 +136,49 @@ Dtype SGDSolver<Dtype>::GetLearningRate() {
 
     rate = this->param_.base_lr() *
         pow(this->param_.gamma(), this->current_step_);
-  } else {
-    LOG(FATAL) << "Unknown learning rate policy: " << lr_policy;
-  }
+   } else if (lr_policy == "triangular") {
+      int itr = this->iter_ - this->param_.start_lr_policy();
+      int cycle = 1 + itr / (2*this->param_.stepsize());
+      if(itr > 0) {
+          float x = (float) (itr - (2*cycle-1)*this->param_.stepsize());
+          x = x / this->param_.stepsize();
+          rate = this->param_.base_lr() + (this->param_.max_lr()- this->param_.base_lr()) * std::max(double(0),(1.0 - fabs(x))/cycle);
+      } else {
+          rate = this->param_.base_lr();
+      }
+    } else if (lr_policy == "triangular2") {
+        int itr = this->iter_ - this->param_.start_lr_policy();
+        if(itr > 0) {
+            int cycle = itr / (2*this->param_.stepsize());
+            float x = (float) (itr - (2*cycle+1)*this->param_.stepsize());
+            x = x / this->param_.stepsize();
+            rate = this->param_.base_lr() + (this->param_.max_lr()- this->param_.base_lr()) * std::min(double(1), std::max(double(0), (1.0 - fabs(x))/pow(2.0,double(cycle))));
+        } else {
+            rate = this->param_.base_lr();
+        }
+    } else if (lr_policy == "cosine") {
+        const double pi = 4. * atan(1.);
+        int itr = this->iter_ - this->param_.start_lr_policy();
+        int cycle = 1 + itr / (2*this->param_.stepsize());
+        if(itr > 0) {
+            float x = (float) (itr - (2 * cycle + 1) * this->param_.stepsize());
+            x = x / this->param_.stepsize();
+            rate = this->param_.max_lr() - 0.5 * (this->param_.max_lr() - this->param_.base_lr()) * (1 + std::cos( ( fabs(x) / cycle ) * pi)); 
+        } else {
+            rate = this->param_.base_lr();
+        }
+    } else if (lr_policy == "cyclic_down") {
+        // max_iter // total number of iterations
+        // base_lr // start learning rate
+        // peaks // number of peaks
+        // max_lr // top learning rate (warmup?)
+        // end_lr // end learning rate
+        //this->iter_ 
+        //rate = ((this->param_.end_lr() - double(prev)) / pow(0.5,(this->param_.end_lr()-double(prev)))) + double(prev);
+      
+    } else {
+      LOG(FATAL) << "Unknown learning rate policy: " << lr_policy;
+    }
   return rate;
 }
 
